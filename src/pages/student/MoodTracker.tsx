@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Brain, Sparkles, AlertCircle, Link2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { anchorRecord, shortHash } from '../../lib/blockchain';
+import { shortHash } from '../../lib/blockchain';
 import type { MoodEntry, MoodAnalysisResult } from '../../types';
 import SoulOrb from '../../components/SoulOrb';
 
@@ -60,11 +60,12 @@ export default function MoodTracker() {
     let ai_feedback = 'Terima kasih telah mencurahkan perasaanmu. Tetaplah tegar.';
     const keywords: string[] = [];
     let crisis_detected = false;
+    let icp_anchor_id: string | null = null;
 
     // Call Supabase Edge Function
     try {
       const { data, error } = await supabase.functions.invoke('analyze-mood', {
-        body: { journal_text: journalText, mood_score: moodScore }
+        body: { journal_text: journalText, mood_score: moodScore, userId: profile.id }
       });
       if (error || !data) {
         throw new Error(error?.message || 'Empty or invalid response from mood analysis function');
@@ -74,8 +75,9 @@ export default function MoodTracker() {
       ai_feedback = data.ai_feedback;
       keywords.push(...(data.keywords || []));
       crisis_detected = data.crisis_detected;
+      icp_anchor_id = data.icp_anchor_id || null;
     } catch (err) {
-      console.warn("Using local fallback mood analysis", err);
+      console.warn("Using local fallback mood analysis:", err);
       const textLower = journalText.toLowerCase();
       if (textLower.includes('sedih') || textLower.includes('kecewa')) keywords.push('kesedihan');
       if (textLower.includes('marah') || textLower.includes('kesal')) keywords.push('kemarahan');
@@ -87,23 +89,6 @@ export default function MoodTracker() {
       }
     }
 
-    // 2. Cryptographic anchoring (Web 2.5 Audit Trail)
-    let on_chain_hash = '';
-    let blockchain_tx_id = '';
-    try {
-      const record = await anchorRecord({
-        type: 'mood_entry',
-        student_id: profile.id,
-        mood_score: moodScore,
-        depression_risk_level,
-        sentiment_score,
-      });
-      on_chain_hash = record.hash;
-      blockchain_tx_id = record.tx_id;
-    } catch (blockchainErr) {
-      console.error("Blockchain anchor failure", blockchainErr);
-    }
-
     // 3. Save to database
     const newEntry = {
       student_id: profile.id,
@@ -113,8 +98,7 @@ export default function MoodTracker() {
       depression_risk_level,
       ai_feedback,
       ai_keywords: keywords,
-      on_chain_hash,
-      blockchain_tx_id,
+      icp_anchor_id,
     };
 
     const { error: insertError } = await supabase.from('mood_entries').insert(newEntry);
@@ -127,18 +111,6 @@ export default function MoodTracker() {
         keywords,
         crisis_detected
       });
-
-      // Auto-trigger BK alert if critical
-      if (crisis_detected || depression_risk_level === 'critical' || depression_risk_level === 'high') {
-        await supabase.from('alerts').insert({
-          student_id: profile.id,
-          alert_type: crisis_detected ? 'crisis_language' : 'mood_decline',
-          severity: depression_risk_level,
-          title: crisis_detected ? 'Deteksi Bahasa Krisis' : 'Penurunan Mood Signifikan',
-          description: `Siswa terdeteksi berisiko ${depression_risk_level.toUpperCase()} berdasarkan refleksi harian. Jurnal: "${journalText.slice(0, 60)}..."`,
-          ai_score: sentiment_score,
-        });
-      }
 
       setPage(1);
       fetchEntries();
@@ -203,7 +175,7 @@ export default function MoodTracker() {
                 required
               />
               <div className="flex justify-between text-[10px] text-text-secondary font-mono">
-                <span>Data terenkripsi dan dienkapsulasi</span>
+                <span>Data tersimpan secara privat</span>
                 <span>{journalText.length} karakter</span>
               </div>
             </div>
@@ -290,10 +262,10 @@ export default function MoodTracker() {
                   )}
 
                   <div className="flex items-center justify-between pt-2 border-t border-cosmic-border/30 text-[9px] font-mono text-[#3D4F7A]">
-                    {item.on_chain_hash ? (
-                      <span className="flex items-center gap-1 text-[#3ECFB2] hover:underline cursor-pointer" title={item.on_chain_hash}>
+                    {item.icp_anchor_id ? (
+                      <span className="flex items-center gap-1 text-[#3ECFB2]" title={`ICP Anchor ID: ${item.icp_anchor_id}`}>
                         <Link2 size={10} />
-                        On-chain: {shortHash(item.on_chain_hash)}
+                        On-chain: ICP #{item.icp_anchor_id}
                       </span>
                     ) : (
                       <span>Offline Mode</span>

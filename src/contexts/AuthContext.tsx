@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { generatePseudonymousId, generateDeterministicWallet } from '../lib/blockchain';
 import type { Profile } from '../types';
 
 interface AuthContextValue {
@@ -13,7 +12,6 @@ interface AuthContextValue {
   signUp: (email: string, password: string, fullName: string, role: 'student' | 'counselor', className?: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-  linkExternalWallet: (address: string) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -28,29 +26,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
     if (data && mounted.current) {
       const currentProfile = data as Profile;
-      // Auto-generate a wallet address if it doesn't exist for students
-      if (!currentProfile.wallet_address && currentProfile.role === 'student') {
-        const derivedWallet = await generateDeterministicWallet(userId);
-        // Best effort background update
-        void supabase.from('profiles').update({ wallet_address: derivedWallet }).eq('id', userId);
-        currentProfile.wallet_address = derivedWallet;
-      }
       setProfile(currentProfile);
     } else if (!data && mounted.current) {
       // Self-heal: profile record does not exist (created in auth but missing in profiles table)
       try {
         const emailVal = email || 'siswa@sekolah.sch.id';
         const fullName = emailVal.split('@')[0].replace(/[._-]/g, ' ');
-        const pseudonymousId = await generatePseudonymousId(userId, 'SCHOOL_DEFAULT');
-        const derivedWallet = await generateDeterministicWallet(userId);
 
         const newProfile = {
           id: userId,
           full_name: fullName.charAt(0).toUpperCase() + fullName.slice(1),
           role: 'student' as const, // default role
           school_id: 'SCHOOL_DEFAULT',
-          pseudonymous_id: pseudonymousId,
-          wallet_address: derivedWallet,
+          pseudonymous_id: 'pending-' + userId.slice(0, 8),
+          wallet_address: null,
           consent_given: true,
           email: emailVal,
         };
@@ -95,26 +84,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signUp(email: string, password: string, fullName: string, role: 'student' | 'counselor', className?: string) {
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ 
+      email, 
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/success`,
+        data: {
+          full_name: fullName,
+          role,
+          class_name: className ?? null
+        }
+      }
+    });
     if (error) return { error: error.message };
     if (!data.user) return { error: 'Pendaftaran gagal. Coba lagi.' };
 
-    const pseudonymousId = await generatePseudonymousId(data.user.id, 'SCHOOL_DEFAULT');
-    const derivedWallet = role === 'student' ? await generateDeterministicWallet(data.user.id) : null;
-
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: data.user.id,
-      full_name: fullName,
-      role,
-      school_id: 'SCHOOL_DEFAULT',
-      class_name: className ?? null,
-      pseudonymous_id: pseudonymousId,
-      wallet_address: derivedWallet,
-      consent_given: true,
-      email,
-    });
-
-    if (profileError) return { error: profileError.message };
     return { error: null };
   }
 
@@ -127,17 +111,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (session?.user) await fetchProfile(session.user.id, session.user.email);
   }
 
-  async function linkExternalWallet(address: string) {
-    if (!session?.user) return { error: 'Pengguna tidak terautentikasi' };
-    const { error } = await supabase.from('profiles').update({ wallet_address: address }).eq('id', session.user.id);
-    if (error) return { error: error.message };
-    await fetchProfile(session.user.id, session.user.email);
-    return { error: null };
-  }
-
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, loading, signIn, signUp, signOut, refreshProfile, linkExternalWallet }}>
+    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, loading, signIn, signUp, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
@@ -148,4 +124,3 @@ export function useAuth() {
   if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;
 }
-

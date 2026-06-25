@@ -32,6 +32,7 @@ export interface MoodEntry {
   ai_keywords?: string[];
   on_chain_hash?: string;
   blockchain_tx_id?: string;
+  icp_anchor_id?: string;
   created_at: string;
 }
 
@@ -48,6 +49,7 @@ export interface BullyingReport {
   bk_notes?: string;
   on_chain_hash?: string;
   blockchain_tx_id?: string;
+  icp_anchor_id?: string;
   created_at: string;
   updated_at: string;
   reporter?: Profile;
@@ -84,6 +86,7 @@ export interface Alert {
   resolved_by?: string;
   resolution_notes?: string;
   on_chain_tx_id?: string;
+  icp_anchor_id?: string;
   triggered_at: string;
   student?: Profile;
 }
@@ -105,19 +108,13 @@ export interface MoodAnalysisResult {
   crisis_detected: boolean;
 }
 
-export interface BlockchainRecord {
-  hash: string;
-  tx_id: string;
-  timestamp: number;
-  network: string;
-}
-
 export interface DigitalBadge {
   id: string;
   student_id: string;
   badge_type: 'resilience' | 'advocate' | 'pioneer';
   minted_tx: string;
   on_chain_hash: string;
+  icp_token_id?: string;
   minted_at: string;
 }
 

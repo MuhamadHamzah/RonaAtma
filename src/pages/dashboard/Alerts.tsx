@@ -2,14 +2,49 @@ import { useEffect, useState } from 'react';
 import { Bell, Heart, Shield, RefreshCw, CheckCircle2, ChevronRight, Fingerprint } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { anchorRecord, shortHash } from '../../lib/blockchain';
 import type { Alert, AlertSeverity } from '../../types';
+
+function playAlertChime() {
+  try {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Play a gentle double chime
+    // Tone 1
+    const osc1 = audioCtx.createOscillator();
+    const gain1 = audioCtx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+    gain1.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+    osc1.connect(gain1);
+    gain1.connect(audioCtx.destination);
+    osc1.start();
+    osc1.stop(audioCtx.currentTime + 0.4);
+    
+    // Tone 2 (played slightly delayed)
+    setTimeout(() => {
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(880.00, audioCtx.currentTime); // A5
+      gain2.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+      osc2.start();
+      osc2.stop(audioCtx.currentTime + 0.6);
+    }, 150);
+  } catch (err) {
+    console.warn('AudioContext not allowed or not supported:', err);
+  }
+}
 
 export default function AlertsDashboard() {
   const { profile } = useAuth();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [activeTab, setActiveTab] = useState<AlertSeverity | 'all'>('all');
   const [loading, setLoading] = useState(true);
+  const [newAlertNotice, setNewAlertNotice] = useState<string | null>(null);
   
   // Selected alert details for follow up action
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
@@ -20,8 +55,33 @@ export default function AlertsDashboard() {
     fetchAlerts();
   }, [activeTab]);
 
-  async function fetchAlerts() {
-    setLoading(true);
+  useEffect(() => {
+    const channel = supabase
+      .channel('alerts-realtime-alerts-page')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'alerts' },
+        async (payload) => {
+          console.log('Realtime alert payload:', payload);
+          if (payload.eventType === 'INSERT') {
+            const newAlert = payload.new;
+            if (newAlert.severity === 'critical' || newAlert.severity === 'high') {
+              playAlertChime();
+              setNewAlertNotice(`${newAlert.title} (${newAlert.severity.toUpperCase()})`);
+            }
+          }
+          fetchAlerts(false); // Silent refresh
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeTab]);
+
+  async function fetchAlerts(showSpinner = true) {
+    if (showSpinner) setLoading(true);
     let query = supabase.from('alerts')
       .select('*, student:profiles(*)')
       .eq('is_resolved', false)
@@ -33,7 +93,7 @@ export default function AlertsDashboard() {
 
     const { data } = await query;
     if (data) setAlerts(data as Alert[]);
-    setLoading(false);
+    if (showSpinner) setLoading(false);
   }
 
   async function handleResolveAlert(e: React.FormEvent) {
@@ -43,15 +103,23 @@ export default function AlertsDashboard() {
     setActioning(true);
     
     // Cryptographic anchoring of follow-up action
-    let on_chain_tx_id = '';
+    let icp_anchor_id = '';
     try {
-      const record = await anchorRecord({
-        type: 'alert_resolution',
-        alert_id: selectedAlert.id,
-        resolver_id: profile.id,
-        resolution_notes: resolutionNotes,
+      const { data: anchorData } = await supabase.functions.invoke('blockchain-anchor', {
+        body: {
+          data: {
+            type: 'alert_resolution',
+            alert_id: selectedAlert.id,
+            resolver_id: profile.id,
+            resolution_notes: resolutionNotes,
+          },
+          dataType: 'crisisAlert',
+          userId: profile.id
+        }
       });
-      on_chain_tx_id = record.tx_id;
+      if (anchorData?.anchorId) {
+        icp_anchor_id = String(anchorData.anchorId);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -62,7 +130,7 @@ export default function AlertsDashboard() {
         resolved_at: new Date().toISOString(),
         resolved_by: profile.id,
         resolution_notes: resolutionNotes,
-        on_chain_tx_id: on_chain_tx_id || null,
+        icp_anchor_id: icp_anchor_id || null,
       })
       .eq('id', selectedAlert.id);
 
@@ -83,10 +151,29 @@ export default function AlertsDashboard() {
           <h1 className="page-title font-bold text-glow-purple">Peringatan Berisiko (Early Warning)</h1>
           <p className="text-text-secondary text-sm">Deteksi dini indikasi gangguan kesehatan mental dan ancaman perundungan berdasarkan analisis AI.</p>
         </div>
-        <button onClick={fetchAlerts} className="p-2.5 rounded-xl bg-[#121A30]/50 border border-cosmic-border text-text-secondary hover:text-[#F0F4FF] self-start md:self-auto">
+        <button onClick={() => fetchAlerts()} className="p-2.5 rounded-xl bg-[#121A30]/50 border border-cosmic-border text-text-secondary hover:text-[#F0F4FF] self-start md:self-auto">
           <RefreshCw size={16} />
         </button>
       </div>
+
+      {newAlertNotice && (
+        <div className="p-4 bg-accent-coral/20 border border-accent-coral rounded-2xl flex items-center justify-between animate-pulse shadow-[0_0_20px_rgba(255,107,138,0.2)]">
+          <div className="flex items-center gap-3">
+            <span className="flex h-3.5 w-3.5 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-coral opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-accent-coral"></span>
+            </span>
+            <div className="text-xs font-bold text-accent-coral uppercase tracking-wider font-mono">
+              SIAGA SATU KRISIS: {newAlertNotice}
+            </div>
+          </div>
+          <button 
+            onClick={() => setNewAlertNotice(null)} 
+            className="text-xs font-bold text-[#FF6B8A] hover:text-[#F0F4FF] uppercase px-3 py-1 rounded-lg bg-accent-coral/10 hover:bg-accent-coral/25 transition-colors">
+            Tutup
+          </button>
+        </div>
+      )}
 
       {/* Severity Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
@@ -169,12 +256,15 @@ export default function AlertsDashboard() {
         </div>
 
         {/* Action Panel */}
-        <div className="lg:col-span-5">
+        <div className={`${selectedAlert ? 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm lg:relative lg:inset-auto lg:z-auto lg:p-0 lg:bg-transparent lg:backdrop-blur-none lg:block lg:col-span-5' : 'hidden lg:block lg:col-span-5'}`}>
           {selectedAlert ? (
-            <div className="card-luminous p-6 space-y-6 sticky top-20 animate-slide-up">
-              <div className="flex items-center gap-2 border-b border-cosmic-border/40 pb-3">
-                <Bell size={18} className="text-accent-coral" />
-                <h3 className="font-display font-bold text-sm text-[#F0F4FF]">Tindakan Penanganan</h3>
+            <div className="card-luminous p-5 sm:p-6 space-y-6 w-full max-w-lg lg:max-w-none lg:sticky lg:top-20 animate-slide-up max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-cosmic-border/40 pb-3">
+                <div className="flex items-center gap-2">
+                  <Bell size={18} className="text-accent-coral" />
+                  <h3 className="font-display font-bold text-sm text-[#F0F4FF]">Tindakan Penanganan</h3>
+                </div>
+                <button onClick={() => setSelectedAlert(null)} className="text-text-secondary hover:text-[#F0F4FF] text-xs font-bold uppercase">Tutup</button>
               </div>
 
               <div className="space-y-4">

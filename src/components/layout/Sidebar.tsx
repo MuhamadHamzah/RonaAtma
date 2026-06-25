@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Brain, MessageCircleHeart, Shield, Users,
   Bell, AlertTriangle, BookOpen, BarChart3, LogOut, ChevronLeft, ChevronRight,
-  Sparkles, Fingerprint
+  Sparkles, Fingerprint, Heart, GraduationCap
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -14,7 +14,9 @@ const studentNav = [
   { to: '/student/chatbot', icon: MessageCircleHeart, label: 'Curhat AI' },
   { to: '/student/report', icon: Shield, label: 'Bilik Curhat' },
   { to: '/student/safespace', icon: Users, label: 'SafeSpace' },
-  { to: '/student/web3', icon: Sparkles, label: 'Loker' },
+  { to: '/student/selfcare', icon: Heart, label: 'Self-Care' },
+  { to: '/student/grades', icon: GraduationCap, label: 'Rapor Belajar' },
+  { to: '/student/web3', icon: Sparkles, label: 'Pencapaian' },
 ];
 
 const counselorNav = [
@@ -23,6 +25,7 @@ const counselorNav = [
   { to: '/dashboard/reports', icon: AlertTriangle, label: 'Laporan' },
   { to: '/dashboard/moderation', icon: BookOpen, label: 'Moderasi' },
   { to: '/dashboard/analytics', icon: BarChart3, label: 'Analitik' },
+  { to: '/dashboard/grades', icon: GraduationCap, label: 'Nilai Siswa' },
   { to: '/dashboard/audit', icon: Fingerprint, label: 'Audit' },
 ];
 
@@ -109,21 +112,29 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </aside>
 
       {/* Mobile Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-4 left-4 right-4 z-40 bg-cosmic-card1/80 backdrop-blur-xl border border-cosmic-border/80 rounded-2xl p-2 flex items-center justify-around shadow-2xl">
-        {nav.map(({ to, icon: Icon, label, exact }) => (
-          <NavLink key={to} to={to} end={exact}
-            className={({ isActive }) =>
-              `flex flex-col items-center gap-1 p-2 rounded-xl text-[10px] font-bold transition-all duration-300
-              ${isActive ? 'text-[#3ECFB2]' : 'text-[#7B8EC8]'}`}
-            title={label}>
-            <Icon size={18} className="flex-shrink-0" />
-            <span className="text-[8px] font-medium tracking-tight">{label}</span>
-          </NavLink>
-        ))}
-        <button onClick={handleSignOut} className="flex flex-col items-center gap-1 p-2 text-[#7B8EC8] hover:text-[#FF6B8A]">
-          <LogOut size={18} />
-          <span className="text-[8px] font-medium tracking-tight">Keluar</span>
-        </button>
+      <nav className="md:hidden fixed bottom-4 left-4 right-4 z-40 bg-cosmic-card1/85 backdrop-blur-xl border border-cosmic-border/80 rounded-2xl p-2 flex items-center gap-1 overflow-x-auto no-scrollbar shadow-2xl">
+        <div className="flex items-center gap-1 w-full min-w-max px-1">
+          {nav.map(({ to, icon: Icon, label, exact }) => (
+            <NavLink key={to} to={to} end={exact}
+              className={({ isActive }) =>
+                `flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all duration-300 flex-shrink-0
+                ${isActive 
+                  ? 'bg-gradient-to-r from-accent-purple/20 to-accent-teal/10 border border-[#7C5CFC]/30 text-[#3ECFB2] shadow-inner' 
+                  : 'text-[#7B8EC8] hover:bg-[#121A30]/50'
+                }`}
+              title={label}>
+              <Icon size={16} className="flex-shrink-0" />
+              <span className="text-[9px] font-semibold tracking-tight">{label}</span>
+            </NavLink>
+          ))}
+          <button 
+            onClick={handleSignOut} 
+            className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-[#7B8EC8] hover:bg-accent-coral/15 hover:text-[#FF6B8A] transition-all duration-300 flex-shrink-0"
+          >
+            <LogOut size={16} />
+            <span className="text-[9px] font-semibold tracking-tight">Keluar</span>
+          </button>
+        </div>
       </nav>
     </>
   );

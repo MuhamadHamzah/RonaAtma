@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Brain, Shield, Users, MessageCircleHeart, TrendingUp, TrendingDown, Minus, Sparkles, ArrowRight } from 'lucide-react';
+import { Brain, Shield, Users, MessageCircleHeart, TrendingUp, TrendingDown, Minus, Sparkles, ArrowRight, Heart, GraduationCap } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { MoodEntry, Alert } from '../../types';
@@ -41,6 +41,9 @@ export default function StudentDashboard() {
     { to: '/student/chatbot', icon: MessageCircleHeart, label: 'Curhat AI', desc: 'Bicara dengan asisten empati', accentColor: '#3ECFB2' },
     { to: '/student/report', icon: Shield, label: 'Bilik Curhat', desc: 'Laporkan perundungan anonim', accentColor: '#FF6B8A' },
     { to: '/student/safespace', icon: Users, label: 'SafeSpace', desc: 'Komunitas suportif', accentColor: '#A78BFA' },
+    { to: '/student/selfcare', icon: Heart, label: 'Self-Care', desc: 'Latihan pernapasan & kuis', accentColor: '#FF8A8A' },
+    { to: '/student/grades', icon: GraduationCap, label: 'Rapor Belajar', desc: 'Nilai akademik & korelasi stres', accentColor: '#A78BFA' },
+    { to: '/student/web3', icon: Sparkles, label: 'Galeri Pencapaian', desc: 'Klaim lencana karakter & bukti identitas blockchain', accentColor: '#3ECFB2' },
   ];
 
   if (loading) return (

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { ShieldAlert, ShieldAlert as ShieldIcon, Lock, Unlock, Calendar, MapPin, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { anchorRecord, shortHash } from '../../lib/blockchain';
 import type { BullyingReport, ReportStatus } from '../../types';
 
 export default function ReportsDashboard() {
@@ -41,20 +40,28 @@ export default function ReportsDashboard() {
     if (!selectedReport || !profile || updating) return;
     setUpdating(true);
 
+    let icp_anchor_id = selectedReport.icp_anchor_id || '';
     let on_chain_hash = selectedReport.on_chain_hash || '';
-    let blockchain_tx_id = selectedReport.blockchain_tx_id || '';
     
     // Anchor update history to blockchain
     try {
-      const record = await anchorRecord({
-        type: 'report_status_update',
-        report_id: selectedReport.id,
-        updater_id: profile.id,
-        new_status: newStatus,
-        notes: bkNotes
+      const { data: anchorData } = await supabase.functions.invoke('blockchain-anchor', {
+        body: {
+          data: {
+            type: 'report_status_update',
+            report_id: selectedReport.id,
+            updater_id: profile.id,
+            new_status: newStatus,
+            notes: bkNotes
+          },
+          dataType: 'bullyingReport',
+          userId: profile.id
+        }
       });
-      on_chain_hash = record.hash;
-      blockchain_tx_id = record.tx_id;
+      if (anchorData?.anchorId) {
+        icp_anchor_id = String(anchorData.anchorId);
+        on_chain_hash = anchorData.hash;
+      }
     } catch (err) {
       console.error(err);
     }
@@ -64,7 +71,7 @@ export default function ReportsDashboard() {
         status: newStatus,
         bk_notes: bkNotes || null,
         on_chain_hash,
-        blockchain_tx_id,
+        icp_anchor_id: icp_anchor_id || null,
         updated_at: new Date().toISOString()
       })
       .eq('id', selectedReport.id);
@@ -165,16 +172,16 @@ export default function ReportsDashboard() {
         </div>
 
         {/* Report Detail & Actions panel */}
-        <div className="lg:col-span-5">
+        <div className={`${selectedReport ? 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm lg:relative lg:inset-auto lg:z-auto lg:p-0 lg:bg-transparent lg:backdrop-blur-none lg:block lg:col-span-5' : 'hidden lg:block lg:col-span-5'}`}>
           {selectedReport ? (
-            <div className="card-luminous p-6 space-y-6 sticky top-20 animate-slide-up">
+            <div className="card-luminous p-5 sm:p-6 space-y-6 w-full max-w-lg lg:max-w-none lg:sticky lg:top-20 animate-slide-up max-h-[90vh] overflow-y-auto">
               
               <div className="flex items-center justify-between border-b border-cosmic-border/40 pb-3">
                 <div className="flex items-center gap-2">
                   <ShieldIcon size={18} className="text-accent-coral" />
                   <h3 className="font-display font-bold text-sm text-[#F0F4FF]">Detail Laporan Kasus</h3>
                 </div>
-                <button onClick={() => setSelectedReport(null)} className="text-text-secondary hover:text-[#F0F4FF] text-xs font-bold uppercase">Tutup</button>
+                <button onClick={() => { setSelectedReport(null); setRevealReporter(false); }} className="text-text-secondary hover:text-[#F0F4FF] text-xs font-bold uppercase">Tutup</button>
               </div>
 
               <div className="space-y-4 text-xs leading-relaxed text-text-secondary">

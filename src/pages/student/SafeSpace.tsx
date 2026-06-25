@@ -12,6 +12,14 @@ const CATEGORIES: { value: ForumCategory; label: string; icon: string }[] = [
   { value: 'cerita', label: 'Cerita', icon: '📖' },
 ];
 
+function sanitizeText(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/<[^>]*>/g, '') // Strip HTML tags
+    .replace(/javascript:/gi, '') // Strip javascript: URLs
+    .trim();
+}
+
 export default function SafeSpace() {
   const { profile } = useAuth();
   const [posts, setPosts] = useState<ForumPost[]>([]);
@@ -34,7 +42,7 @@ export default function SafeSpace() {
 
   async function fetchPosts() {
     setLoading(true);
-    let query = supabase.from('forum_posts')
+    let query = supabase.from('forum_posts_view')
       .select('*, author:profiles(*)')
       .eq('moderation_status', 'approved')
       .order('created_at', { ascending: false });
@@ -89,13 +97,22 @@ export default function SafeSpace() {
     setSubmitting(true);
     setError('');
 
+    const sanitizedTitle = sanitizeText(title);
+    const sanitizedContent = sanitizeText(content);
+
+    if (!sanitizedTitle || !sanitizedContent) {
+      setError('Judul atau konten tidak valid setelah sanitasi HTML.');
+      setSubmitting(false);
+      return;
+    }
+
     // AI Content Moderation Check
     let moderationStatus: 'approved' | 'flagged' | 'rejected' = 'approved';
     let moderationReason = '';
 
     try {
       const { data, error } = await supabase.functions.invoke('moderate-content', {
-        body: { content: `${title}\n\n${content}` }
+        body: { content: `${sanitizedTitle}\n\n${sanitizedContent}` }
       });
       if (error || !data) {
         throw new Error(error?.message || 'Empty or invalid response from moderation function');
@@ -105,7 +122,7 @@ export default function SafeSpace() {
     } catch (err) {
       console.warn("Using local bad words filter moderation fallback", err);
       const badWords = ['anjing', 'bangsat', 'babi', 'goblok', 'tolol', 'bodoh', 'kontol', 'memek', 'ngentot'];
-      const combined = `${title} ${content}`.toLowerCase();
+      const combined = `${sanitizedTitle} ${sanitizedContent}`.toLowerCase();
       const hasBadWord = badWords.some(w => combined.includes(w));
       if (hasBadWord) {
         moderationStatus = 'flagged';
@@ -121,8 +138,8 @@ export default function SafeSpace() {
 
     const newPost = {
       author_id: profile.id,
-      title,
-      content,
+      title: sanitizedTitle,
+      content: sanitizedContent,
       category,
       is_anonymous: isAnonymous,
       moderation_status: moderationStatus,
@@ -152,12 +169,12 @@ export default function SafeSpace() {
   return (
     <div className="space-y-6 max-w-5xl">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div>
           <h1 className="page-title font-bold text-glow-purple">SafeSpace Community</h1>
           <p className="text-text-secondary text-sm">Diskusikan emosi, tips, dan dapatkan dukungan nyata tanpa rasa cemas.</p>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="btn-primary flex-shrink-0">
+        <button onClick={() => setIsModalOpen(true)} className="btn-primary flex-shrink-0 w-full sm:w-auto justify-center">
           <PlusCircle size={16} />
           Buat Diskusi Baru
         </button>
@@ -281,7 +298,7 @@ export default function SafeSpace() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-wider text-text-secondary mb-1.5">Kategori</label>
                   <select 
@@ -294,7 +311,7 @@ export default function SafeSpace() {
                   </select>
                 </div>
                 
-                <div className="flex flex-col justify-end">
+                <div className="flex flex-col justify-end sm:pt-0 pt-1">
                   <label className="flex items-center gap-2 cursor-pointer p-2.5 bg-[#121A30]/50 border border-cosmic-border rounded-xl">
                     <input 
                       type="checkbox" 

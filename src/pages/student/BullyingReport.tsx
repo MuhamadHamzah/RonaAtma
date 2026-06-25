@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { ShieldAlert, ShieldCheck, Lock, Calendar, MapPin, UserSquare2, Sparkles, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { anchorRecord } from '../../lib/blockchain';
 import type { IncidentType } from '../../types';
 
 const INCIDENT_TYPES: { type: IncidentType; label: string; emoji: string; desc: string }[] = [
@@ -31,24 +30,6 @@ export default function BullyingReport() {
     if (!profile || !incidentType || description.length < 30 || !incidentDate) return;
 
     setLoading(true);
-    
-    // Cryptographic Anchoring (Web 2.5)
-    let on_chain_hash = '';
-    let blockchain_tx_id = '';
-    try {
-      const record = await anchorRecord({
-        type: 'bullying_report',
-        victim_pseudonymous_id: profile.pseudonymous_id,
-        incident_type: incidentType,
-        incident_date: incidentDate,
-        description: description,
-      });
-      on_chain_hash = record.hash;
-      blockchain_tx_id = record.tx_id;
-      setBlockchainRecord({ hash: record.hash, tx_id: record.tx_id });
-    } catch (err) {
-      console.error("Blockchain audit logging failed", err);
-    }
 
     const newReport = {
       reporter_id: profile.id,
@@ -59,21 +40,51 @@ export default function BullyingReport() {
       location: location || null,
       perpetrator_description: perpetratorDesc || null,
       status: 'pending',
-      on_chain_hash,
-      blockchain_tx_id,
     };
 
-    const { error } = await supabase.from('bullying_reports').insert(newReport);
-    if (!error) {
-      // Auto generate alert for BK team
-      await supabase.from('alerts').insert({
-        student_id: profile.id,
-        alert_type: 'bullying_report',
-        severity: 'high',
-        title: `Laporan Baru: ${incidentType.toUpperCase()}`,
-        description: `Laporan anonim baru diajukan mengenai ${incidentType}. Lokasi: ${location || 'Tidak disebutkan'}.`,
-        ai_score: 0.8,
-      });
+    const { data: insertedData, error } = await supabase
+      .from('bullying_reports')
+      .insert(newReport)
+      .select()
+      .single();
+
+    if (!error && insertedData) {
+      try {
+        // Call the blockchain-anchor Edge Function
+        const { data: anchorData } = await supabase.functions.invoke('blockchain-anchor', {
+          body: {
+            data: { incident_type: incidentType, incident_date: incidentDate, description },
+            dataType: 'bullyingReport',
+            userId: profile.id
+          }
+        });
+
+        if (anchorData?.anchorId) {
+          // Update the report with the real icp_anchor_id
+          await supabase
+            .from('bullying_reports')
+            .update({ icp_anchor_id: String(anchorData.anchorId) })
+            .eq('id', insertedData.id);
+
+          setBlockchainRecord({ hash: anchorData.hash, tx_id: String(anchorData.anchorId) });
+        }
+      } catch (blockchainErr) {
+        console.error("Gagal melakukan penulisan blockchain ICP:", blockchainErr);
+      }
+
+      try {
+        // Invoke crisis-handler Edge Function to create alert server-side
+        await supabase.functions.invoke('crisis-handler', {
+          body: {
+            userId: profile.id,
+            triggerSource: 'bullying_report',
+            content: `Laporan ${incidentType}: ${description.slice(0, 100)}`
+          }
+        });
+      } catch (alertErr) {
+        console.error("Gagal memicu alert BK:", alertErr);
+      }
+
       setStep(3);
     } else {
       console.error("Bullying report submission failed", error);
@@ -273,7 +284,7 @@ export default function BullyingReport() {
                 Laporan Berhasil Diamankan <Sparkles size={14} className="text-accent-lavender" />
               </h2>
               <p className="text-text-secondary text-xs leading-relaxed">
-                Laporanmu telah berhasil masuk ke sistem penanganan bimbingan konseling dan tercatat pada blockchain audit trail secara rahasia.
+                Laporanmu telah berhasil masuk ke sistem penanganan bimbingan konseling dan tercatat pada blockchain ICP audit trail secara rahasia.
               </p>
             </div>
 
@@ -283,9 +294,9 @@ export default function BullyingReport() {
                   <Lock size={12} /> Bukti Blockchain Terdaftar
                 </div>
                 <div className="text-[10px] space-y-1 leading-relaxed text-[#7B8EC8]">
-                  <p className="break-all"><strong className="text-[#F0F4FF]">TRANSAKSI ID:</strong> {blockchainRecord.tx_id}</p>
+                  <p className="break-all"><strong className="text-[#F0F4FF]">ICP ANCHOR ID:</strong> {blockchainRecord.tx_id}</p>
                   <p className="break-all"><strong className="text-[#F0F4FF]">HASH AUDIT:</strong> {blockchainRecord.hash}</p>
-                  <p><strong className="text-[#F0F4FF]">JARINGAN:</strong> ronaatma-audit-chain</p>
+                  <p><strong className="text-[#F0F4FF]">JARINGAN:</strong> Internet Computer (ICP)</p>
                 </div>
               </div>
             )}

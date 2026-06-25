@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { BarChart3, Database, ShieldAlert, Sparkles, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { anchorRecord } from '../../lib/blockchain';
+// No blockchain imports needed here anymore
 
 const COLORS = ['#3ECFB2', '#A78BFA', '#FF6B8A', '#FF6B8A']; // Teal, Lavender, Coral
 
@@ -92,14 +92,22 @@ export default function Analytics() {
     setAnchoring(true);
     setBlockchainRecord(null);
     try {
-      const record = await anchorRecord({
-        type: 'school_mental_health_snapshot',
-        avg_mood: stats.avgMood,
-        total_students: stats.totalStudents,
-        total_reports: stats.totalReports,
-        active_alerts: stats.activeAlerts
+      const { data: anchorData } = await supabase.functions.invoke('blockchain-anchor', {
+        body: {
+          data: {
+            type: 'school_mental_health_snapshot',
+            avg_mood: stats.avgMood,
+            total_students: stats.totalStudents,
+            total_reports: stats.totalReports,
+            active_alerts: stats.activeAlerts
+          },
+          dataType: 'crisisAlert',
+          userId: 'counselor'
+        }
       });
-      setBlockchainRecord(record.tx_id);
+      if (anchorData?.anchorId) {
+        setBlockchainRecord(String(anchorData.anchorId));
+      }
     } catch (err) {
       console.error(err);
     }

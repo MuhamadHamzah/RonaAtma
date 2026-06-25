@@ -6,6 +6,8 @@ import AppLayout from './components/layout/AppLayout';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import RegisterCounselor from './pages/auth/RegisterCounselor';
+import AuthSuccess from './pages/auth/AuthSuccess';
+import LandingPage from './pages/LandingPage';
 
 import StudentDashboard from './pages/student/Dashboard';
 import MoodTracker from './pages/student/MoodTracker';
@@ -13,6 +15,8 @@ import Chatbot from './pages/student/Chatbot';
 import BullyingReport from './pages/student/BullyingReport';
 import SafeSpace from './pages/student/SafeSpace';
 import Web3Hub from './pages/student/Web3Hub';
+import SelfCare from './pages/student/SelfCare';
+import AcademicMentalReport from './pages/student/AcademicMentalReport';
 
 import CounselorOverview from './pages/dashboard/Overview';
 import AlertsDashboard from './pages/dashboard/Alerts';
@@ -20,6 +24,7 @@ import ReportsDashboard from './pages/dashboard/Reports';
 import ForumModeration from './pages/dashboard/ForumModeration';
 import Analytics from './pages/dashboard/Analytics';
 import AuditTrail from './pages/dashboard/AuditTrail';
+import GradesManagement from './pages/dashboard/GradesManagement';
 
 export default function App() {
   return (
@@ -43,6 +48,8 @@ export default function App() {
                 <Route path="/student/chatbot" element={<Chatbot />} />
                 <Route path="/student/report" element={<BullyingReport />} />
                 <Route path="/student/safespace" element={<SafeSpace />} />
+                <Route path="/student/selfcare" element={<SelfCare />} />
+                <Route path="/student/grades" element={<AcademicMentalReport />} />
                 <Route path="/student/web3" element={<Web3Hub />} />
               </Route>
             </Route>
@@ -55,12 +62,15 @@ export default function App() {
                 <Route path="/dashboard/reports" element={<ReportsDashboard />} />
                 <Route path="/dashboard/moderation" element={<ForumModeration />} />
                 <Route path="/dashboard/analytics" element={<Analytics />} />
+                <Route path="/dashboard/grades" element={<GradesManagement />} />
                 <Route path="/dashboard/audit" element={<AuditTrail />} />
               </Route>
             </Route>
           </Route>
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="/auth/success" element={<AuthSuccess />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

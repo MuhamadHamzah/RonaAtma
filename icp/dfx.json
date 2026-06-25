@@ -1,0 +1,15 @@
+{
+  "canisters": {
+    "ronaatma_backend": {
+      "main": "src/main.mo",
+      "type": "motoko"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "version": 1
+}

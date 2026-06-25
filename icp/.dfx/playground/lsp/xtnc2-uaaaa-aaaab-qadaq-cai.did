@@ -1,0 +1,51 @@
+type Result = 
+ variant {
+   err: text;
+   ok: MintResult;
+ };
+type MintResult = 
+ record {
+   badgeType: text;
+   mintedAt: int;
+   tokenId: nat;
+ };
+type DataType = 
+ variant {
+   badgeMint;
+   bullyingReport;
+   crisisAlert;
+   moodEntry;
+ };
+type Badge = 
+ record {
+   badgeType: text;
+   id: nat;
+   mintedAt: int;
+   pseudoId: text;
+ };
+type AnchorResult = 
+ record {
+   anchorId: nat;
+   hash: text;
+   timestamp: int;
+ };
+type AnchorRecord = 
+ record {
+   dataType: DataType;
+   hash: text;
+   id: nat;
+   pseudoId: text;
+   timestamp: int;
+ };
+service : {
+  anchorRecord: (hash: text, dataType: DataType, pseudoId: text) ->
+   (AnchorResult);
+  getAuditTrail: (limit: nat) -> (vec AnchorRecord) query;
+  getSBTBadges: (pseudoId: text) -> (vec Badge) query;
+  getStats: () -> (record {
+                     totalAnchors: nat;
+                     totalBadges: nat;
+                   }) query;
+  mintSBT: (pseudoId: text, badgeType: text) -> (Result);
+  verifyRecord: (anchorId: nat) -> (opt AnchorRecord) query;
+}

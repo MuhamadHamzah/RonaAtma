@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Sparkles, Shield, Heart, Award, Copy, Check, Fingerprint, RefreshCw } from 'lucide-react';
+import { Sparkles, Shield, Heart, Award, RefreshCw, Fingerprint } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { anchorRecord, shortHash } from '../../lib/blockchain';
 import type { DigitalBadge } from '../../types';
 
 export default function Web3Hub() {
-  const { profile, refreshProfile, linkExternalWallet } = useAuth();
-  const [copied, setCopied] = useState(false);
+  const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
   
   // Status check counts
@@ -46,60 +44,26 @@ export default function Web3Hub() {
     if (data) setBadges(data as DigitalBadge[]);
   }
 
-  function handleCopy() {
-    if (!profile?.wallet_address) return;
-    navigator.clipboard.writeText(profile.wallet_address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  async function connectMetaMask() {
-    setLoading(true);
-    // Simulate Metamask provider connection delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Generate derived wallet as mockup address
-    const mockAddr = `0x${Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
-    const { error } = await linkExternalWallet(mockAddr);
-    if (!error) {
-      await refreshProfile();
-    }
-    setLoading(false);
-  }
-
-  // Multi-step Mint SBT Badge Simulation
+  // Multi-step Mint SBT Badge via Edge Function
   async function mintSBT(type: 'resilience' | 'advocate' | 'pioneer') {
     if (!profile) return;
     setMintingType(type);
     setMintStep(1); // 1. Verify eligibility
-
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 1000));
     setMintStep(2); // 2. Generating hash audit on-chain
-
-    const blockchainRecord = await anchorRecord({
-      type: 'badge_mint',
-      student_id: profile.id,
-      badge_type: type,
-      timestamp: Date.now()
-    });
-
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setMintStep(3); // 3. Minting block write
-
-    const newBadge = {
-      student_id: profile.id,
-      badge_type: type,
-      minted_tx: blockchainRecord.tx_id,
-      on_chain_hash: blockchainRecord.hash,
-    };
-
-    const { error } = await supabase.from('digital_badges').insert(newBadge);
-    if (!error) {
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('mint-sbt', {
+        body: { userId: profile.id, badgeType: type }
+      });
+      if (error || !data) throw new Error(error?.message || 'Minting gagal');
+      
+      setMintStep(3); // 3. Complete writing on-chain
       await new Promise(resolve => setTimeout(resolve, 1000));
-      setMintStep(4); // 4. Complete
+      setMintStep(4); // 4. Done
       fetchBadges();
-    } else {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       setMintingType(null);
     }
   }
@@ -138,13 +102,13 @@ export default function Web3Hub() {
     <div className="space-y-8 max-w-5xl">
       {/* Header */}
       <div>
-        <h1 className="page-title font-bold text-glow-purple">Loker Digital & Web3 SBT</h1>
+        <h1 className="page-title font-bold text-glow-purple">Galeri Pencapaian & Lencana Jiwa</h1>
         <p className="text-text-secondary text-sm">Soulbound Tokens (SBT) adalah tanda penghargaan permanen yang tidak dapat diperjualbelikan atas dedikasimu mendukung kesehatan mental sekolah.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* Left Section - Wallet Card */}
+        {/* Left Section - Identity Card */}
         <div className="lg:col-span-4 space-y-6">
           <div className="card-luminous p-6 space-y-6 relative overflow-hidden" 
             style={{ background: 'linear-gradient(135deg, rgba(13,20,36,0.9) 0%, rgba(30,45,74,0.4) 100%)' }}>
@@ -153,51 +117,24 @@ export default function Web3Hub() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-accent-teal">
                 <Fingerprint size={20} className="animate-pulse" />
-                <span className="text-xs font-bold uppercase tracking-wider">Dompet Digital</span>
+                <span className="text-xs font-bold uppercase tracking-wider">Identitas Siswa</span>
               </div>
               <span className="px-2 py-0.5 rounded bg-accent-teal/15 text-[8px] font-mono text-accent-teal font-bold uppercase tracking-widest">
-                Web 2.5 SECURE
+                BLOCKCHAIN TERVERIFIKASI
               </span>
             </div>
 
             <div className="space-y-4">
-              {profile?.wallet_address ? (
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-text-secondary font-mono font-bold uppercase tracking-wider">ALAMAT DOMPET DETIL</p>
-                    <div className="flex items-center justify-between bg-[#070B14] p-3 rounded-xl border border-cosmic-border">
-                      <span className="font-mono text-[10px] text-[#3ECFB2] break-all select-all">
-                        {profile.wallet_address}
-                      </span>
-                      <button onClick={handleCopy} className="text-[#7B8EC8] hover:text-[#F0F4FF] ml-2 flex-shrink-0">
-                        {copied ? <Check size={14} className="text-accent-teal" /> : <Copy size={14} />}
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-text-secondary font-mono font-bold uppercase tracking-wider">PSEUDONYMOUS ID KRIPTO</p>
-                    <p className="font-mono text-xs text-text-secondary">{profile.pseudonymous_id}</p>
-                  </div>
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <p className="text-[10px] text-text-secondary font-mono font-bold uppercase tracking-wider">PSEUDONYMOUS ID KRIPTO</p>
+                  <p className="font-mono text-xs text-[#3ECFB2] break-all select-all">{profile?.pseudonymous_id}</p>
                 </div>
-              ) : (
-                <div className="space-y-4 text-center py-4">
-                  <p className="text-xs text-text-secondary leading-relaxed">
-                    Anda belum mengaitkan dompet Web3 eksternal (misal: MetaMask).
-                  </p>
-                  <button 
-                    onClick={connectMetaMask} 
-                    disabled={loading}
-                    className="btn-primary w-full justify-center text-xs uppercase font-bold py-3">
-                    {loading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Menghubungkan MetaMask...
-                      </span>
-                    ) : 'Hubungkan MetaMask'}
-                  </button>
+                <div className="flex items-center gap-2 text-xs text-[#3ECFB2] bg-[#3ECFB2]/10 p-2.5 rounded-xl border border-[#3ECFB2]/20">
+                  <Shield size={14} className="text-[#3ECFB2]" />
+                  <span className="font-medium">Terverifikasi Blockchain ICP</span>
                 </div>
-              )}
+              </div>
             </div>
             
             <div className="p-3 bg-[#070B14]/80 rounded-xl border border-cosmic-border text-[10px] text-text-secondary leading-normal">
@@ -271,7 +208,7 @@ export default function Web3Hub() {
                     {hasBadge ? (
                       <div className="space-y-1 font-mono text-[9px] text-[#3D4F7A]">
                         <p className="truncate"><strong>HASH:</strong> {hasBadge.on_chain_hash}</p>
-                        <p className="truncate"><strong>TXID:</strong> {hasBadge.minted_tx}</p>
+                        <p className="truncate"><strong>ICP TOKEN:</strong> {hasBadge.icp_token_id || hasBadge.minted_tx}</p>
                       </div>
                     ) : badge.eligible ? (
                       <button 
@@ -318,7 +255,7 @@ export default function Web3Hub() {
                 <span>{mintStep >= 2 ? 'SELESAI' : 'PENDING'}</span>
               </div>
               <div className={`flex items-center justify-between ${mintStep >= 3 ? 'text-[#3ECFB2]' : 'text-text-secondary'}`}>
-                <span>3. Kirim Ledger Blockchain</span>
+                <span>3. Catat di ICP Blockchain</span>
                 <span>{mintStep >= 3 ? 'SELESAI' : 'PENDING'}</span>
               </div>
             </div>
@@ -337,7 +274,7 @@ export default function Web3Hub() {
             <div className="space-y-2">
               <h3 className="font-display font-bold text-[#F0F4FF] text-sm">Lencana Berhasil Terbit!</h3>
               <p className="text-text-secondary text-xs leading-relaxed">
-                Penghargaan Soulbound Token milikmu secara permanen diterbitkan pada blockchain audit trail.
+                Penghargaan Soulbound Token milikmu secara permanen diterbitkan pada blockchain ICP audit trail.
               </p>
             </div>
 

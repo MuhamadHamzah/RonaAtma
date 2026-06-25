@@ -40,8 +40,18 @@ export default {
         'ripple': 'rippleEffect 1.5s cubic-bezier(0, 0, 0.2, 1) infinite',
         'shimmer-teal': 'shimmerTeal 2.5s infinite linear',
         'float-slow': 'floatSlow 6s ease-in-out infinite',
+        'wiggle': 'wiggle 0.5s ease-in-out infinite',
       },
       keyframes: {
+        wiggle: {
+          '0%, 100%': { transform: 'rotate(0deg)' },
+          '15%': { transform: 'rotate(-12deg)' },
+          '30%': { transform: 'rotate(14deg)' },
+          '45%': { transform: 'rotate(-4deg)' },
+          '60%': { transform: 'rotate(10deg)' },
+          '75%': { transform: 'rotate(-4deg)' },
+          '90%': { transform: 'rotate(2deg)' },
+        },
         orbBreathe: {
           '0%, 100%': { transform: 'scale(1)', filter: 'brightness(1) blur(0px)' },
           '50%': { transform: 'scale(1.06)', filter: 'brightness(1.15) blur(1px)' },

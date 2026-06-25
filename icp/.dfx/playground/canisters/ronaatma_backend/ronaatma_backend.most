@@ -1,0 +1,21 @@
+// Version: 1.0.0
+type AnchorRecord__698608420 = AnchorRecord__803649998;
+type AnchorRecord__803649998 =
+  {
+    dataType : DataType__577459009;
+    hash : Text;
+    id : Nat;
+    pseudoId : Text;
+    timestamp : Int
+  };
+type Badge__534134602 =
+  {badgeType : Text; id : Nat; mintedAt : Int; pseudoId : Text};
+type Badge__92836757 = Badge__534134602;
+type DataType__577459009 =
+  {#badgeMint; #bullyingReport; #crisisAlert; #moodEntry};
+actor {
+  stable var nextAnchorId : Nat;
+  stable var nextTokenId : Nat;
+  stable var stableAnchors : [(Nat, AnchorRecord__698608420)];
+  stable var stableBadges : [(Nat, Badge__92836757)]
+};

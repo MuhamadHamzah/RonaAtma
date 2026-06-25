@@ -5,6 +5,41 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Alert } from '../../types';
 
+function playAlertChime() {
+  try {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Play a gentle double chime
+    // Tone 1
+    const osc1 = audioCtx.createOscillator();
+    const gain1 = audioCtx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+    gain1.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+    osc1.connect(gain1);
+    gain1.connect(audioCtx.destination);
+    osc1.start();
+    osc1.stop(audioCtx.currentTime + 0.4);
+    
+    // Tone 2 (played slightly delayed)
+    setTimeout(() => {
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(880.00, audioCtx.currentTime); // A5
+      gain2.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+      osc2.start();
+      osc2.stop(audioCtx.currentTime + 0.6);
+    }, 150);
+  } catch (err) {
+    console.warn('AudioContext not allowed or not supported:', err);
+  }
+}
+
 export default function CounselorOverview() {
   const { profile } = useAuth();
   const [stats, setStats] = useState({
@@ -17,20 +52,24 @@ export default function CounselorOverview() {
   });
   const [recentAlerts, setRecentAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [newAlertNotice, setNewAlertNotice] = useState<string | null>(null);
 
-  useEffect(() => {
-    Promise.all([
-      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
-      supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('is_resolved', false),
-      supabase.from('bullying_reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-      supabase.from('forum_posts').select('*', { count: 'exact', head: true }).eq('moderation_status', 'flagged'),
-      supabase.from('mood_entries').select('mood_score'),
-      supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('is_resolved', true).gte('resolved_at', new Date(new Date().setHours(0,0,0,0)).toISOString()),
-      supabase.from('alerts').select('*, student:profiles(*)').eq('is_resolved', false).order('triggered_at', { ascending: false }).limit(4)
-    ]).then(([st, al, rep, mod, moods, res, recentAl]) => {
+  async function fetchOverviewData(showSpinner = true) {
+    if (showSpinner) setLoading(true);
+    try {
+      const [st, al, rep, mod, moods, res, recentAl] = await Promise.all([
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
+        supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('is_resolved', false),
+        supabase.from('bullying_reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('forum_posts').select('*', { count: 'exact', head: true }).eq('moderation_status', 'flagged'),
+        supabase.from('mood_entries').select('mood_score'),
+        supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('is_resolved', true).gte('resolved_at', new Date(new Date().setHours(0,0,0,0)).toISOString()),
+        supabase.from('alerts').select('*, student:profiles(*)').eq('is_resolved', false).order('triggered_at', { ascending: false }).limit(4)
+      ]);
+
       const moodScores = moods.data?.map(m => m.mood_score) || [];
       const avg = moodScores.length ? Math.round(moodScores.reduce((s, c) => s + c, 0) / moodScores.length * 10) / 10 : 0;
-      
+
       setStats({
         totalStudents: st.count || 0,
         activeAlerts: al.count || 0,
@@ -40,8 +79,40 @@ export default function CounselorOverview() {
         resolvedToday: res.count || 0
       });
       if (recentAl.data) setRecentAlerts(recentAl.data as Alert[]);
-      setLoading(false);
-    });
+    } catch (err) {
+      console.error("Failed to fetch overview data:", err);
+    } finally {
+      if (showSpinner) setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchOverviewData();
+  }, []);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('alerts-realtime-overview')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'alerts' },
+        async (payload) => {
+          console.log('Realtime alert payload in overview:', payload);
+          if (payload.eventType === 'INSERT') {
+            const newAlert = payload.new;
+            if (newAlert.severity === 'critical' || newAlert.severity === 'high') {
+              playAlertChime();
+              setNewAlertNotice(`${newAlert.title} (${newAlert.severity.toUpperCase()})`);
+            }
+          }
+          fetchOverviewData(false); // Silent refresh
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const healthIndex = stats.avgMood;
@@ -73,6 +144,25 @@ export default function CounselorOverview() {
         <h1 className="page-title font-bold text-glow-purple">Ringkasan Misi Konseling</h1>
         <p className="text-text-secondary text-sm">Dashboard pemantauan terpadu bimbingan konseling RonaAtma.</p>
       </div>
+
+      {newAlertNotice && (
+        <div className="p-4 bg-accent-coral/20 border border-accent-coral rounded-2xl flex items-center justify-between animate-pulse shadow-[0_0_20px_rgba(255,107,138,0.2)]">
+          <div className="flex items-center gap-3">
+            <span className="flex h-3.5 w-3.5 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-coral opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-accent-coral"></span>
+            </span>
+            <div className="text-xs font-bold text-accent-coral uppercase tracking-wider font-mono">
+              SIAGA SATU KRISIS: {newAlertNotice}
+            </div>
+          </div>
+          <button 
+            onClick={() => setNewAlertNotice(null)} 
+            className="text-xs font-bold text-[#FF6B8A] hover:text-[#F0F4FF] uppercase px-3 py-1 rounded-lg bg-accent-coral/10 hover:bg-accent-coral/25 transition-colors">
+            Tutup
+          </button>
+        </div>
+      )}
 
       {/* Grid Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">

@@ -35,29 +35,19 @@ export default function Chatbot() {
     listEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  // Detect crisis keywords
-  function detectCrisis(text: string): boolean {
-    const keywords = ['bunuh diri', 'mati aja', 'mengakhiri hidup', 'sayat tangan', 'gantung diri', 'self harm', 'ingin mati', 'suicide'];
-    const lower = text.toLowerCase();
-    return keywords.some(k => lower.includes(k));
-  }
-
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     if (!profile || !inputText.trim() || loading) return;
 
     const userText = inputText.trim();
     setInputText('');
-    
-    const isCrisis = detectCrisis(userText);
-    if (isCrisis) setCrisisDetected(true);
 
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       student_id: profile.id,
       role: 'user',
       content: userText,
-      crisis_detected: isCrisis,
+      crisis_detected: false,
       created_at: new Date().toISOString(),
     };
 
@@ -65,41 +55,29 @@ export default function Chatbot() {
     setMessages(updatedMessages);
     setLoading(true);
 
-    // Save user message to database
-    void supabase.from('chatbot_messages').insert({
-      student_id: profile.id,
-      role: 'user',
-      content: userText,
-      crisis_detected: isCrisis
-    });
-
     let botReplyText = '';
+    let serverCrisisDetected = false;
     
     try {
       // Invoke AI edge function
       const { data, error } = await supabase.functions.invoke('chat-ai', {
         body: { 
           messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
-          system: SYSTEM_PROMPT 
+          system: SYSTEM_PROMPT,
+          userId: profile.id
         }
       });
       if (error || !data?.content) {
         throw new Error(error?.message || 'Empty or invalid response from AI');
       }
       botReplyText = data.content;
-    } catch (err) {
-      console.warn("Using local empathetic AI fallback replies", err);
-      if (isCrisis) {
-        botReplyText = 'Kamu sangat berharga, dan aku sangat peduli padamu. Tolong hubungi konselor BK sekolah di menu Bilik Curhat, atau hubungi hotline nasional secepatnya. Kamu tidak sendirian melewati ini.';
-      } else {
-        const fallbacks = [
-          'Aku paham kok rasanya, makasih ya udah mau cerita ke aku. Mau cerita lebih lanjut?',
-          'Terdengar cukup menantang ya. Bagaimana caramu menghadapinya biasanya?',
-          'Ingat ya, perasaanmu itu valid. Apapun yang terjadi, kamu hebat udah bertahan sampai titik ini.',
-          'Aku di sini dengerin kamu kok. Silakan curahkan apa aja yang ngeganjel di hatimu.'
-        ];
-        botReplyText = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+      serverCrisisDetected = !!data.crisis_detected;
+      if (serverCrisisDetected) {
+        setCrisisDetected(true);
       }
+    } catch (err) {
+      console.warn("Using fallback AI message on connection/API failure:", err);
+      botReplyText = 'Maaf, layanan AI sedang tidak tersedia. Jika kamu sedang mengalami masalah serius, silakan hubungi guru BK sekolahmu untuk mendapatkan bantuan.';
     }
 
     const assistantMsg: ChatMessage = {
@@ -107,32 +85,12 @@ export default function Chatbot() {
       student_id: profile.id,
       role: 'assistant',
       content: botReplyText,
-      crisis_detected: false,
+      crisis_detected: serverCrisisDetected,
       created_at: new Date().toISOString(),
     };
 
     setMessages(prev => [...prev, assistantMsg]);
     setLoading(false);
-
-    // Save bot response to database
-    void supabase.from('chatbot_messages').insert({
-      student_id: profile.id,
-      role: 'assistant',
-      content: botReplyText,
-      crisis_detected: false
-    });
-
-    // If crisis language is detected, trigger counselor alert in background
-    if (isCrisis) {
-      void supabase.from('alerts').insert({
-        student_id: profile.id,
-        alert_type: 'crisis_language',
-        severity: 'critical',
-        title: 'Bahasa Krisis dalam Obrolan AI',
-        description: `Siswa mendiskusikan topik berbahaya dalam obrolan AI: "${userText.slice(0, 50)}..."`,
-        ai_score: 1.0,
-      });
-    }
   }
 
   async function handleClearHistory() {
@@ -248,7 +206,7 @@ export default function Chatbot() {
       </form>
       
       <p className="text-[10px] text-center text-text-muted font-mono uppercase tracking-wider">
-        Pesan dienkripsi end-to-end. Obrolan tidak akan dibagikan ke pihak luar.
+        Pesan tersimpan secara privat dan terlindungi. Obrolan tidak akan dibagikan ke pihak luar.
       </p>
     </div>
   );
