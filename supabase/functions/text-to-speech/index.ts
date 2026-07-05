@@ -28,8 +28,13 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Ambil string kunci, pisahkan dengan koma untuk rotasi (bisa single key atau multiple key)
-    const rawKeys = Deno.env.get("ELEVENLABS_API_KEY") || "sk_677a39a461cdfb91afff3dcf56f7bae5203bfc8629324a6e";
+    const rawKeys = Deno.env.get("ELEVENLABS_API_KEY");
+    if (!rawKeys) {
+      return new Response(JSON.stringify({ error: "Missing ELEVENLABS_API_KEY environment variable on Supabase" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const apiKeys = rawKeys.split(",").map(k => k.trim()).filter(Boolean);
     const selectedVoiceId = voiceId || DEFAULT_VOICE_ID;
 
