@@ -1,7 +1,16 @@
 # RonaAtma: Portal Konseling Siswa Berbasis AI & Keamanan Privasi Desentralisasi
 
 <p align="center">
-  <img src="public/RonaAtma.jpeg" alt="RonaAtma Logo" width="150" style="border-radius: 20px; border: 2px solid #7C5CFC;" />
+  <img src="public/RonaAtma.jpeg" alt="RonaAtma Logo" width="120" style="border-radius: 20px; border: 2px solid #7C5CFC;" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-18.3-20232a.svg?style=flat-square&logo=react&logoColor=61dafb" alt="React" />
+  <img src="https://img.shields.io/badge/TypeScript-5.5-3178c6.svg?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Motoko_(ICP)-Canister-orange.svg?style=flat-square&logo=internetcomputer&logoColor=white" alt="Motoko" />
+  <img src="https://img.shields.io/badge/Vite-5.4-646cff.svg?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-3.4-38bdf8.svg?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind" />
+  <img src="https://img.shields.io/badge/Supabase-Backend-3ecf8e.svg?style=flat-square&logo=supabase&logoColor=white" alt="Supabase" />
 </p>
 
 RonaAtma adalah platform kesehatan mental dan bimbingan konseling digital modern yang dirancang khusus untuk siswa SMA di Indonesia. Sistem ini berfungsi sebagai "Sanctuary" (ruang aman) yang menjembatani keterbatasan jumlah Guru BK di sekolah, membantu mengatasi stres akademik, serta memberikan perlindungan penuh terhadap korban perundungan (*bullying*) dengan mengintegrasikan kecerdasan buatan (AI) empati dan privasi kriptografis desentralisasi.
