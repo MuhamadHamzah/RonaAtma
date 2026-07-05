@@ -30,7 +30,13 @@ Addressing privacy concerns where students fear voiceprints or raw voice recordi
 
 ## 🛠️ Tech Stack & Architecture
 
-* **Frontend:** React (v18), TypeScript, Vite, Tailwind CSS, Lucide icons, Recharts
+* **Languages & Technologies (Bahasa yang Digunakan):**
+  * **TypeScript / TSX:** Core logic React frontend, Web Audio API integration, and hooks.
+  * **TypeScript (Deno Runtime):** Supabase Serverless Edge Functions backend scripts.
+  * **SQL (PostgreSQL PL/pgSQL):** Database schemas, Row Level Security (RLS) policies, and database triggers.
+  * **CSS3:** Custom cyber-cosmic styling and keyframe canvas animations.
+  * **HTML5:** Main skeleton layout.
+* **Frontend:** React (v18), Vite, Tailwind CSS, Lucide icons, Recharts
 * **Backend Database & Serverless:** Supabase (Auth, PostgreSQL, Realtime Database, Edge Functions)
 * **AI Pipelines (Edge Functions):**
   * **STT:** OpenAI Whisper Large v3
