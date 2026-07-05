@@ -11,11 +11,10 @@ import LandingPage from './pages/LandingPage';
 
 import StudentDashboard from './pages/student/Dashboard';
 import MoodTracker from './pages/student/MoodTracker';
-import Chatbot from './pages/student/Chatbot';
+import RonaAtmaAI from './pages/student/RonaAtmaAI';
 import BullyingReport from './pages/student/BullyingReport';
 import SafeSpace from './pages/student/SafeSpace';
 import Web3Hub from './pages/student/Web3Hub';
-import SelfCare from './pages/student/SelfCare';
 import AcademicMentalReport from './pages/student/AcademicMentalReport';
 
 import CounselorOverview from './pages/dashboard/Overview';
@@ -45,10 +44,9 @@ export default function App() {
               <Route element={<AppLayout />}>
                 <Route path="/student" element={<StudentDashboard />} />
                 <Route path="/student/mood" element={<MoodTracker />} />
-                <Route path="/student/chatbot" element={<Chatbot />} />
+                <Route path="/student/ronaatma-ai" element={<RonaAtmaAI />} />
                 <Route path="/student/report" element={<BullyingReport />} />
                 <Route path="/student/safespace" element={<SafeSpace />} />
-                <Route path="/student/selfcare" element={<SelfCare />} />
                 <Route path="/student/grades" element={<AcademicMentalReport />} />
                 <Route path="/student/web3" element={<Web3Hub />} />
               </Route>

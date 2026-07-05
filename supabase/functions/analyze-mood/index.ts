@@ -43,6 +43,7 @@ Deno.serve(async (req: Request) => {
       apiFailed = true;
     } else {
       try {
+        const modelName = Deno.env.get("GROQ_LLM_MODEL") || "llama-3.3-70b-versatile";
         const systemPrompt = `Kamu adalah psikolog AI yang menganalisis jurnal harian siswa SMA Indonesia untuk deteksi dini masalah kesehatan jiwa.
 Analisis teks dan kembalikan JSON dengan format tepat:
 {
@@ -66,7 +67,7 @@ PENTING: Kembalikan HANYA JSON tanpa teks tambahan.`;
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
+            model: modelName,
             max_tokens: 512,
             messages: [
               { role: "system", content: systemPrompt },

@@ -17,6 +17,8 @@
     transition: color 0.3s, background-color 0.3s;
     scroll-padding-top: 88px; /* Height of the fixed header */
     scroll-behavior: smooth;
+    width: 100%;
+    max-w: 100vw;
     overflow-x: hidden; /* Prevent horizontal scroll globally — single scroll context */
   }
   
@@ -24,6 +26,9 @@
     background-color: #070B14;
     color: #7B8EC8; /* Muted steel blue for body text */
     transition: color 0.3s, background-color 0.3s;
+    width: 100%;
+    max-w: 100vw;
+    overflow-x: hidden;
   }
 
   /* Headings typography default settings */
@@ -60,6 +65,7 @@
     border-radius: 1rem;
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    max-width: 100%;
   }
   
   /* Accent Luminous border card */

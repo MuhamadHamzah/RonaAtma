@@ -100,13 +100,20 @@ Deno.serve(async (req: Request) => {
 
     // Call AI API
     const apiKey = Deno.env.get("GROQ_API_KEY");
+    const modelName = Deno.env.get("GROQ_LLM_MODEL") || "llama-3.3-70b-versatile";
     let botResponseText = "";
+    let emotion = "calm";
     let apiFailed = false;
 
     if (!apiKey) {
       apiFailed = true;
     } else {
       try {
+        const enrichedSystemPrompt = `${system}\n\nPENTING: Di akhir responmu, wajib sertakan tepat satu tag emosi yang menggambarkan perasaan atau ekspresimu saat memberikan jawaban ini. Gunakan format persis seperti ini di bagian paling akhir teks: [EMOTION:calm|concerned|encouraging|alert]. Jangan sampai salah eja. Contoh: "Aku paham kok perasaanmu, ceritakan saja. [EMOTION:concerned]"`;
+
+        // Hanya kirim 6 pesan terakhir untuk menghemat token input (Context Pruning)
+        const optimizedMessages = messages.slice(-6);
+
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -114,11 +121,11 @@ Deno.serve(async (req: Request) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
-            max_tokens: 512,
+            model: modelName,
+            max_tokens: 150, // Batasi ke 150 token untuk menghemat token output & mempercepat latency suara
             messages: [
-              { role: "system", content: system },
-              ...messages.map((m) => ({ role: m.role, content: m.content }))
+              { role: "system", content: enrichedSystemPrompt },
+              ...optimizedMessages.map((m) => ({ role: m.role, content: m.content }))
             ],
           }),
         });
@@ -130,7 +137,15 @@ Deno.serve(async (req: Request) => {
         const data = await response.json() as {
           choices: { message: { content: string } }[];
         };
-        botResponseText = data.choices[0].message.content;
+        let rawContent = data.choices[0].message.content;
+
+        // Parse and strip emotion tag
+        const emotionMatch = rawContent.match(/\[EMOTION:(calm|concerned|encouraging|alert)\]/i);
+        if (emotionMatch) {
+          emotion = emotionMatch[1].toLowerCase();
+          rawContent = rawContent.replace(/\[EMOTION:(calm|concerned|encouraging|alert)\]/i, "").trim();
+        }
+        botResponseText = rawContent;
       } catch (err) {
         console.error("AI API Call failed:", err);
         apiFailed = true;
@@ -160,7 +175,7 @@ Deno.serve(async (req: Request) => {
       crisis_detected: isCrisis, // match the flag if user triggered crisis
     });
 
-    return new Response(JSON.stringify({ content: botResponseText, crisis_detected: isCrisis }), {
+    return new Response(JSON.stringify({ content: botResponseText, emotion, crisis_detected: isCrisis }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {

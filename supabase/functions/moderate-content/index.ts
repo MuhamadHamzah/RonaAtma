@@ -55,6 +55,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    const modelName = Deno.env.get("GROQ_LLM_MODEL") || "llama-3.3-70b-versatile";
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -62,7 +63,7 @@ Deno.serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: modelName,
         max_tokens: 256,
         messages: [
           {

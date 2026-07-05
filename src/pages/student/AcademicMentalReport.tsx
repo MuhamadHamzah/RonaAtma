@@ -308,9 +308,9 @@ export default function AcademicMentalReport() {
               </div>
 
               <div className="pt-4 border-t border-cosmic-border/40 mt-4">
-                <Link to="/student/selfcare" className="w-full flex items-center justify-between p-3 bg-accent-purple/10 hover:bg-accent-purple/20 border border-accent-purple/30 rounded-xl text-xs font-bold text-accent-lavender transition-all group">
+                <Link to="/student/ronaatma-ai" className="w-full flex items-center justify-between p-3 bg-[#3ECFB2]/10 hover:bg-[#3ECFB2]/20 border border-[#3ECFB2]/30 rounded-xl text-xs font-bold text-[#3ECFB2] transition-all group">
                   <span className="flex items-center gap-2">
-                    <BookOpen size={14} /> Butuh Tenang? Coba Self-Care
+                    <BookOpen size={14} /> Butuh Tenang? Curhat di RonaAtma.AI
                   </span>
                   <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </Link>

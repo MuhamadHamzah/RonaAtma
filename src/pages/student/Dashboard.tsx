@@ -38,10 +38,9 @@ export default function StudentDashboard() {
 
   const quickActions = [
     { to: '/student/mood', icon: Brain, label: 'Mood Tracker', desc: 'Catat jurnal & analisis AI', accentColor: '#7C5CFC' },
-    { to: '/student/chatbot', icon: MessageCircleHeart, label: 'Curhat AI', desc: 'Bicara dengan asisten empati', accentColor: '#3ECFB2' },
+    { to: '/student/ronaatma-ai', icon: MessageCircleHeart, label: 'RonaAtma.AI', desc: 'Curhat interaktif via teks dan suara', accentColor: '#3ECFB2' },
     { to: '/student/report', icon: Shield, label: 'Bilik Curhat', desc: 'Laporkan perundungan anonim', accentColor: '#FF6B8A' },
     { to: '/student/safespace', icon: Users, label: 'SafeSpace', desc: 'Komunitas suportif', accentColor: '#A78BFA' },
-    { to: '/student/selfcare', icon: Heart, label: 'Self-Care', desc: 'Latihan pernapasan & kuis', accentColor: '#FF8A8A' },
     { to: '/student/grades', icon: GraduationCap, label: 'Rapor Belajar', desc: 'Nilai akademik & korelasi stres', accentColor: '#A78BFA' },
     { to: '/student/web3', icon: Sparkles, label: 'Galeri Pencapaian', desc: 'Klaim lencana karakter & bukti identitas blockchain', accentColor: '#3ECFB2' },
   ];

@@ -42,7 +42,7 @@ export default function AuthSuccess() {
 
       {/* Floating Soul Orb decoration */}
       <div className="mb-8 animate-web3-float">
-        <SoulOrb size="large" moodScore={9} />
+        <SoulOrb size="lg" moodScore={9} />
       </div>
 
       <div className="w-full max-w-md space-y-6 z-10">

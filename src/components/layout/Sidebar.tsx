@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Brain, MessageCircleHeart, Shield, Users,
   Bell, AlertTriangle, BookOpen, BarChart3, LogOut, ChevronLeft, ChevronRight,
-  Sparkles, Fingerprint, Heart, GraduationCap
+  Sparkles, Fingerprint, Heart, GraduationCap, Mic
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -11,10 +11,9 @@ interface SidebarProps { collapsed: boolean; onToggle: () => void; }
 const studentNav = [
   { to: '/student', icon: LayoutDashboard, label: 'Beranda', exact: true },
   { to: '/student/mood', icon: Brain, label: 'Mood' },
-  { to: '/student/chatbot', icon: MessageCircleHeart, label: 'Curhat AI' },
+  { to: '/student/ronaatma-ai', icon: MessageCircleHeart, label: 'RonaAtma.AI' },
   { to: '/student/report', icon: Shield, label: 'Bilik Curhat' },
   { to: '/student/safespace', icon: Users, label: 'SafeSpace' },
-  { to: '/student/selfcare', icon: Heart, label: 'Self-Care' },
   { to: '/student/grades', icon: GraduationCap, label: 'Rapor Belajar' },
   { to: '/student/web3', icon: Sparkles, label: 'Pencapaian' },
 ];

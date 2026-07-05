@@ -34,6 +34,7 @@ export default function AppLayout() {
   // Notification states
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Fetch notifications
@@ -223,7 +224,7 @@ export default function AppLayout() {
 
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
 
-      <main className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ${collapsed ? 'md:ml-16' : 'md:ml-60'} ml-0 pb-28 md:pb-0 z-10`}>
+      <main className={`flex-1 min-w-0 w-full overflow-x-hidden min-h-screen flex flex-col transition-all duration-300 ${collapsed ? 'md:ml-16' : 'md:ml-60'} ml-0 pb-28 md:pb-0 z-10`}>
         <header className="h-14 bg-cosmic-card-deep/70 backdrop-blur-md border-b border-cosmic-border/60 flex items-center justify-between px-6 sticky top-0 z-20 transition-all duration-300">
           <span className="font-display font-semibold text-glow-purple text-[#F0F4FF] text-sm">
             {profile?.role === 'counselor' ? 'Dashboard Guru BK' : 'Portal Siswa'}
@@ -293,33 +294,44 @@ export default function AppLayout() {
                       <span>Tidak ada notifikasi baru</span>
                     </div>
                   ) : (
-                    notifications.map(n => (
-                      <div 
-                        key={n.id}
-                        onClick={() => !n.is_read && markAsRead(n.id)}
-                        className={`py-2 px-1 flex gap-3 text-left transition-all ${
-                          !n.is_read ? 'cursor-pointer hover:bg-[#121A30]/30' : ''
-                        }`}
-                      >
-                        <div className="w-6 h-6 rounded-lg bg-[#121A30] border border-cosmic-border/35 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          {getNotifIcon(n.type)}
+                    notifications.map(n => {
+                      const isExpanded = expandedId === n.id;
+                      return (
+                        <div 
+                          key={n.id}
+                          onClick={() => {
+                            setExpandedId(isExpanded ? null : n.id);
+                            if (!n.is_read) markAsRead(n.id);
+                          }}
+                          className={`py-2 px-1 flex gap-3 text-left transition-all cursor-pointer rounded-xl ${
+                            isExpanded ? 'bg-[#121A30]/50 px-2' : 'hover:bg-[#121A30]/30'
+                          }`}
+                        >
+                          <div className="w-6 h-6 rounded-lg bg-[#121A30] border border-cosmic-border/35 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            {getNotifIcon(n.type)}
+                          </div>
+                          <div className="min-w-0 space-y-0.5 flex-1">
+                            <p className={`text-[11px] ${!n.is_read && !isExpanded ? 'font-bold text-[#F0F4FF]' : isExpanded ? 'font-bold text-[#F0F4FF]' : 'text-text-secondary'}`}>
+                              {n.title}
+                            </p>
+                            <p className={`text-[10px] text-text-secondary leading-relaxed break-words ${
+                              isExpanded ? '' : 'line-clamp-2'
+                            }`}>
+                              {n.content}
+                            </p>
+                            <p className="text-[8px] text-[#526895] font-mono">
+                              {formatTime(n.created_at)}
+                            </p>
+                            {isExpanded && (
+                              <p className="text-[9px] text-accent-teal font-bold mt-1">Tutup ▲</p>
+                            )}
+                          </div>
+                          {!n.is_read && !isExpanded && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-accent-teal mt-2.5 flex-shrink-0" />
+                          )}
                         </div>
-                        <div className="min-w-0 space-y-0.5">
-                          <p className={`text-[11px] truncate ${!n.is_read ? 'font-bold text-[#F0F4FF]' : 'text-text-secondary'}`}>
-                            {n.title}
-                          </p>
-                          <p className="text-[10px] text-text-secondary leading-normal break-words line-clamp-2">
-                            {n.content}
-                          </p>
-                          <p className="text-[8px] text-[#526895] font-mono">
-                            {formatTime(n.created_at)}
-                          </p>
-                        </div>
-                        {!n.is_read && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-accent-teal mt-2.5 flex-shrink-0" />
-                        )}
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -331,7 +343,7 @@ export default function AppLayout() {
           </div>
         </header>
         
-        <div className="flex-1 p-4 md:p-6 animate-fade-in z-10">
+        <div className="flex-1 w-full max-w-full min-w-0 overflow-x-hidden p-3 sm:p-4 md:p-6 animate-fade-in z-10">
           <Outlet />
         </div>
       </main>
