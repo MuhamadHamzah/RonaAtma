@@ -1,121 +1,130 @@
-# RonaAtma: AI-Powered & Privacy-First Student Counseling Sanctuary
+# RonaAtma: Portal Konseling Siswa Berbasis AI & Keamanan Privasi Desentralisasi
 
-RonaAtma is a modern, web-based student mental health and counseling support platform designed specifically for high school students in Indonesia. Built as a "Sanctuary," it addresses the critical student-to-counselor gap, high-school stress, and bullying by integrating empathetic artificial intelligence with zero-biometric, decentralized cryptographic privacy paradigms.
+<p align="center">
+  <img src="public/RonaAtma.jpeg" alt="RonaAtma Logo" width="150" style="border-radius: 20px; border: 2px solid #7C5CFC;" />
+</p>
+
+RonaAtma adalah platform kesehatan mental dan bimbingan konseling digital modern yang dirancang khusus untuk siswa SMA di Indonesia. Sistem ini berfungsi sebagai "Sanctuary" (ruang aman) yang menjembatani keterbatasan jumlah Guru BK di sekolah, membantu mengatasi stres akademik, serta memberikan perlindungan penuh terhadap korban perundungan (*bullying*) dengan mengintegrasikan kecerdasan buatan (AI) empati dan privasi kriptografis desentralisasi.
 
 ---
 
-## 🌌 Key Features & Innovations
+## 🌌 Fitur Utama & Inovasi
 
-### 1. Unified RonaAtma.AI Hub
-An integrated chat and calling experience replacing traditional segregated communication interfaces.
-* **Smart Input Switching:** The message input dynamically morphs between a **Send** action (when text is present) and a **Voice Call** toggle (when input is empty).
-* **Instant Hand-Back Transcription:** Text conversations and voice calling sessions happen in the same view. Ending a call automatically collapses the Call UI and appends the spoken dialogue into the persistent text history.
+### 1. Hub Terpadu RonaAtma.AI
+Penggabungan utuh antara ruang obrolan teks dan panggilan suara dalam satu halaman interaktif.
+* **Smart Input Switching:** Kolom input secara dinamis berubah fungsi. Tombol berubah menjadi **Kirim Pesan** (jika ada teks yang diketik) dan otomatis berubah menjadi **Panggilan Suara (Mic)** jika kolom input kosong.
+* **Sinkronisasi Riwayat:** Transkrip obrolan selama sesi panggilan suara akan otomatis terarsip dan langsung masuk ke riwayat chat teks setelah panggilan diakhiri, memungkinkan siswa membaca ulang respon AI kapan saja.
 
-### 2. Dual-Stream Voice Masking (Client-Side Privacy)
-Addressing privacy concerns where students fear voiceprints or raw voice recordings could be tracked or leaked.
-* **Web Audio Processing:** Utilizes local browser node graphs (`BiquadFilterNode`, `OscillatorNode`, and `WaveShaperNode`) to process audio.
-* **Dual-Stream Pipeline:**
-  * **Stream 1 (Raw Audio):** Sent directly to the Speech-to-Text (STT) recorder locally to ensure Whisper maintains **98% transcription accuracy**.
-  * **Stream 2 (Masked Audio):** Frequency/pitch shifted locally in real-time, routed solely to the Analyser node to drive the Siri Quantum Fluid Orb visualizer.
-  * **Zero Biometrics on Server:** The student's raw biological voiceprint never leaves the client device.
+### 2. Penyamaran Suara Dua Jalur (*Dual-Stream Voice Masking*)
+Sistem keamanan biologis tingkat tinggi untuk menghilangkan ketakutan siswa bahwa suara asli mereka akan direkam atau dikenali oleh admin server.
+* **Proses Lokal 100% (Client-Side):** Modifikasi audio diproses langsung di browser menggunakan Web Audio API tanpa melibatkan GPU eksternal.
+* **Arsitektur Dual-Stream:**
+  * **Jalur Asli (Original Stream):** Dikirim ke MediaRecorder lokal untuk diteruskan ke AI STT agar transkripsi Whisper tetap akurat sebesar **98%**.
+  * **Jalur Samaran (Masked Stream):** Nada, frekuensi, dan warna suara dimodifikasi secara real-time lalu dihubungkan ke visualizer Orb. Suara asli **tidak pernah** meninggalkan perangkat siswa.
 
 ### 3. Siri Quantum Fluid Orb Visualizer
-* Replaces static 2D avatars with a dynamic, multi-layered Bezier/sine wave fluid visualizer canvas that pulses and changes color/movement depending on active microphone input (user speaking) and speaker output (AI speaking).
+* Menggantikan visual wajah 2D statis dengan visualisasi fluida dinamis berbasis sinyal sinus/Bezier ganda pada elemen Canvas HTML5, bergerak responsif seirama dengan amplitudo mic (siswa) dan speaker (AI).
 
-### 4. Early Warning System (EWS) & Counselor Dashboard
-* **Automatic Sentiment Tracking:** Tracks mood stability fluctuations over a multi-day window.
-* **BK Alerts:** Automated notifications triggered to Guru BK for critical mental health or high-risk bullying reports while preserving student pseudonymity.
-
----
-
-## 🛠️ Tech Stack & Architecture
-
-* **Languages & Technologies (Bahasa yang Digunakan):**
-  * **TypeScript / TSX:** Core logic React frontend, Web Audio API integration, and hooks.
-  * **TypeScript (Deno Runtime):** Supabase Serverless Edge Functions backend scripts.
-  * **SQL (PostgreSQL PL/pgSQL):** Database schemas, Row Level Security (RLS) policies, and database triggers.
-  * **CSS3:** Custom cyber-cosmic styling and keyframe canvas animations.
-  * **HTML5:** Main skeleton layout.
-* **Frontend:** React (v18), Vite, Tailwind CSS, Lucide icons, Recharts
-* **Backend Database & Serverless:** Supabase (Auth, PostgreSQL, Realtime Database, Edge Functions)
-* **AI Pipelines (Edge Functions):**
-  * **STT:** OpenAI Whisper Large v3
-  * **LLM Completions:** Groq Llama-3/Qwen with contextual few-shot Indonesian teenage slang prompting
-  * **TTS:** ElevenLabs Multi-Key Rotation and Fallback Pipeline (graceful Web Speech API browser-side fallback if ElevenLabs limits are hit)
-* **Blockchain-Ready Layer:** ICP (Internet Computer Protocol) canister mock salt interfaces for decentralized, pseudonymous identity generation.
+### 4. Sistem Peringatan Dini (*Early Warning System*) & Dashboard BK
+* **Pemetaan Stres Kolektif:** Sistem melacak stabilitas emosional harian siswa melalui Mood Tracker.
+* **Alarm Darurat:** Jika AI mendeteksi penurunan kestabilan mental secara drastis dalam 3 hari berturut-turut atau adanya indikasi krisis verbal, sistem otomatis mengirim notifikasi terenkripsi rahasia ke akun Guru BK untuk penanganan dini.
 
 ---
 
-## 📂 Project Directory Structure
+## 🛠️ Bahasa Pemrograman & Arsitektur Teknologi
+
+* **Bahasa Pemrograman & Skrip:**
+  * **Motoko (`.mo`):** Digunakan untuk membangun kontrak pintar (*Canister Smart Contract*) di jaringan **Internet Computer Protocol (ICP)** untuk manajemen salt enkripsi identitas samaran (*pseudonym*) siswa secara terdesentralisasi.
+  * **TypeScript / TSX:** Logika inti aplikasi React, sistem navigasi, hooks audio, dan manajemen state.
+  * **TypeScript (Deno Runtime):** Bahasa skrip untuk Supabase Serverless Edge Functions backend.
+  * **SQL (PostgreSQL PL/pgSQL):** Desain skema database, kebijakan keamanan baris (RLS), dan pemicu (*database triggers*).
+  * **CSS3:** Kustomisasi visual gaya *cyber-cosmic* dan transisi layout responsif.
+  * **HTML5:** Struktur layout utama.
+* **Kerangka Kerja (Framework) & Pustaka:** React (v18), Vite, Tailwind CSS, Lucide Icons, Recharts.
+* **Infrastruktur Backend:** Supabase (Autentikasi, PostgreSQL, Realtime Database, Edge Functions).
+* **Integrasi Jalur AI (Edge Functions):**
+  * **STT (Speech-to-Text):** OpenAI Whisper Large v3.
+  * **LLM Completions:** Groq Llama-3/Qwen dengan penyesuaian gaya bahasa gaul remaja Indonesia.
+  * **TTS (Text-to-Speech):** ElevenLabs Multi-Key Rotation Pipeline (dilengkapi fallback otomatis ke Web Speech API lokal jika limit API key ElevenLabs habis).
+
+---
+
+## 📂 Struktur Direktori Proyek
 
 ```text
+├── icp/                      # Integrasi Internet Computer Protocol
+│   ├── src/
+│   │   ├── main.mo           # Logika utama Canister Smart Contract (Motoko)
+│   │   └── types.mo          # Struktur tipe data Motoko
+│   └── dfx.json              # Konfigurasi DFX ICP SDK
 ├── supabase/
 │   ├── functions/
-│   │   ├── chat-ai/          # LLM completions + crisis detection
-│   │   ├── speech-to-text/   # Whisper v3 endpoint
-│   │   └── text-to-speech/   # ElevenLabs multi-key TTS rotation engine
+│   │   ├── chat-ai/          # LLM completions + deteksi sinyal krisis
+│   │   ├── speech-to-text/   # Endpoint Whisper v3
+│   │   └── text-to-speech/   # Mesin rotasi multi-kunci ElevenLabs
 │   └── config.toml
 ├── src/
 │   ├── components/
 │   │   ├── layout/
-│   │   │   ├── AppLayout.tsx # Global responsive viewport (dvh/overflow guard)
-│   │   │   └── Sidebar.tsx   # Sidebar & bottom mobile nav
-│   │   └── AvatarCounselor.tsx # Siri Quantum Fluid Orb canvas
+│   │   │   ├── AppLayout.tsx # Kontainer responsif global (guard anti-overflow mobile)
+│   │   │   └── Sidebar.tsx   # Menu samping & navigasi bawah handphone
+│   │   └── AvatarCounselor.tsx # Visualisasi Quantum Fluid Orb Canvas
 │   ├── hooks/
-│   │   └── useAudioEngine.ts # Voice masking + VAD + audio playback engine
+│   │   └── useAudioEngine.ts # Mesin perekam, pemutar, VAD, & penyamaran suara
 │   ├── pages/
 │   │   ├── student/
-│   │   │   ├── Dashboard.tsx # Main student portal
-│   │   │   ├── MoodTracker.tsx # Mood input & AI feedback
-│   │   │   ├── RonaAtmaAI.tsx # Combined Chat & Voice RonaAtma.AI screen
-│   │   │   └── BullyingReport.tsx # Decentralized anonymous reporting
-│   │   └── dashboard/        # Counselor Dashboard pages (BK view)
-│   ├── App.tsx               # Client routes (Vite + React Router)
-│   └── index.css             # Anti-overflow, custom scrollbars, card themes
+│   │   │   ├── Dashboard.tsx # Beranda Sanctuary Siswa
+│   │   │   ├── MoodTracker.tsx # Pencatatan jurnal harian & analisis AI
+│   │   │   ├── RonaAtmaAI.tsx # Obrolan teks & panggilan suara RonaAtma.AI terpadu
+│   │   │   └── BullyingReport.tsx # Bilik Curhat pelaporan anonim blockchain
+│   │   └── dashboard/        # Dashboard Guru BK (BK View)
+│   ├── App.tsx               # Konfigurasi routing aplikasi
+│   └── index.css             # Penjaga overflow global, scrollbar kustom, & tema kartu
 ```
 
 ---
 
-## 🚀 Local Development Setup
+## 🚀 Panduan Menjalankan di Lokal
 
-### Prerequisites
-* [Node.js](https://nodejs.org/) (v18+ recommended)
-* [Supabase CLI](https://supabase.com/docs/guides/cli) (for Edge Functions local development)
+### Prasyarat
+* [Node.js](https://nodejs.org/) (v18+ direkomendasikan)
+* [Supabase CLI](https://supabase.com/docs/guides/cli) (untuk Edge Functions lokal)
+* [DFX SDK](https://internetcomputer.org/docs/current/developer-docs/getting-started/install/) (opsional, jika ingin mendeploy canister ICP lokal)
 
-### 1. Installation
-Clone the repository and install npm dependencies:
+### 1. Instalasi Dependensi
+Unduh repositori dan instal dependensi pustaka npm:
 ```bash
-git clone <repository-url>
+git clone <url-repositori-anda>
 cd RonaAtma
 npm install
 ```
 
-### 2. Environment Configurations
-Create a `.env` file in the root directory:
+### 2. Konfigurasi Environment
+Buat berkas `.env` di root direktori proyek:
 ```bash
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_public_key
+VITE_SUPABASE_URL=url_proyek_supabase_anda
+VITE_SUPABASE_ANON_KEY=kunci_anon_publik_supabase_anda
 ```
 
-### 3. Run Dev Server
-Launch Vite's hot-reloading development server locally:
+### 3. Jalankan Server Pengembangan
+Jalankan server lokal dengan fitur hot-reload:
 ```bash
 npm run dev
 ```
-Open `http://localhost:5173` (or the console printed port) in your browser.
+Buka `http://localhost:5173` (atau port lain yang tertera di konsol) pada browser Anda.
 
 ---
 
-## 🔒 Production & Supabase Deploy
+## 🔒 Panduan Deploy Produksi
 
-### Supabase Edge Functions Secrets
-Deploy ElevenLabs keys (main + backups) to Supabase cloud environment secrets:
+### Mengunggah Secrets Supabase (API Keys ElevenLabs)
+Deploy kunci utama ElevenLabs beserta kunci cadangan ke secrets cloud Supabase:
 ```bash
-npx supabase secrets set ELEVENLABS_API_KEY="key1,key2,key3"
+npx supabase secrets set ELEVENLABS_API_KEY="kunci1,kunci2,kunci3"
 ```
 
-### Build & Compilation Check
-Compile assets and check TypeScript compliance before deploying:
+### Pengecekan Kesalahan Ketik & Kompilasi
+Lakukan pemeriksaan tipe data TypeScript dan uji proses build sebelum melakukan deploy:
 ```bash
 npm run typecheck
 npm run build
@@ -123,8 +132,8 @@ npm run build
 
 ---
 
-## 🛡️ Privacy & Legal Compliance (UU PDP)
-RonaAtma strictly adheres to Indonesian Law **UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP)**:
-1. **De-identification:** All student personal identifiers (Names, Student ID numbers) are cryptographically decoupled from chat transcripts in the database.
-2. **Voluntary Informed Consent:** Both text and voice inputs require explicitly granted permission and consent triggers.
-3. **No Biometric Leaks:** Audio voice masking is executed 100% client-side before STT parsing. Original voiceprints are never retained on server logs.
+## 🛡️ Kepatuhan Regulasi Hukum (UU PDP No. 27 Tahun 2022)
+RonaAtma mematuhi secara ketat regulasi **Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP)** di Indonesia:
+1. **De-identifikasi Data:** Seluruh data identitas asli siswa (Nama, Kelas, NISN) dipotong secara kriptografis dari data transkrip curhat di database.
+2. **Persetujuan Sukarela (*Informed Consent*):** Pengambilan sampel data suara maupun teks memerlukan aksi persetujuan eksplisit dari siswa sebelum sesi dimulai.
+3. **Keamanan Biometrik:** Suara asli diubah bentuknya secara lokal di client-side (*voice masking*) sebelum dianalisis, sehingga rekaman suara biologis asli tidak pernah disimpan atau bocor di server bimbingan konseling.
