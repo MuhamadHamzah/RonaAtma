@@ -1,7 +1,7 @@
 # RonaAtma: Portal Konseling Siswa Berbasis AI & Keamanan Privasi Desentralisasi
 
 <p align="center">
-  <img src="public/RonaAtma.jpeg" alt="RonaAtma Logo" width="120" style="border-radius: 20px; border: 2px solid #7C5CFC;" />
+  <img src="public/RonaAtma-logo.png" alt="RonaAtma Logo" width="120" style="border-radius: 20px; border: 2px solid #7C5CFC;" />
 </p>
 
 <p align="center">
